@@ -28,7 +28,7 @@
         @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
         .animate-float { animation: float 6s ease-in-out infinite; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
+        .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
         .glass-input { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; }
         .glass-input::placeholder { color: rgba(255, 255, 255, 0.5); }
         .glass-input:focus { background: rgba(255, 255, 255, 0.2); outline: none; border-color: rgba(255, 255, 255, 0.5); }
@@ -45,7 +45,7 @@
 
         const { useState, useEffect, useRef } = React;
         
-        // --- Yerel Tarih Yardımcısı (Saat Dilimi Düzeltmesi) ---
+        // --- Yerel Tarih Yardımcısı ---
         const getLocalDateString = () => {
             const d = new Date();
             const year = d.getFullYear();
@@ -80,13 +80,13 @@
             if (isCompleted) return 'bg-slate-50 opacity-60 border-slate-100';
             if (!dateStr) return 'bg-white/60 shadow-sm border border-slate-100';
 
-            const today = new Date(getLocalDateString()); // Yerel tarihi kullan
+            const today = new Date(getLocalDateString());
             const target = new Date(dateStr);
             const diffTime = target - today;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             const diffMonths = diffDays / 30;
 
-            if (diffMonths < 0) return 'bg-red-50 border border-red-100 text-red-900 shadow-sm'; // Günü geçmiş
+            if (diffMonths < 0) return 'bg-red-50 border border-red-100 text-red-900 shadow-sm'; 
             if (diffMonths < 3) return 'bg-green-100 border border-green-200 text-green-900 shadow-sm'; 
             else if (diffMonths >= 3 && diffMonths < 6) return 'bg-pink-100 border border-pink-200 text-pink-900 shadow-sm';
             else if (diffMonths >= 6 && diffMonths <= 12) return 'bg-orange-100 border border-orange-200 text-orange-900 shadow-sm'; 
@@ -95,7 +95,7 @@
             return 'bg-white/60 shadow-sm border border-slate-100';
         };
 
-        // --- Sabitler ---
+        // --- Sabitler & Varsayılan Veriler ---
         const DEFAULT_CATEGORIES = [
             { id: 'spor', name: 'Spor', icon: 'dumbbell', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
             { id: 'beslenme', name: 'Beslenme', icon: 'utensils', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-100' },
@@ -103,6 +103,16 @@
             { id: 'akademi', name: 'Akademi', icon: 'book-open', color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
             { id: 'proje', name: 'Proje', icon: 'briefcase', color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100' },
             { id: 'finans', name: 'Finans', icon: 'wallet', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' }
+        ];
+
+        // --- HAZIR KATEGORİ PRESETLERİ (YENİ) ---
+        const PRESET_CATEGORIES = [
+            { name: 'Proje', icon: 'briefcase', color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100' },
+            { name: 'Spor', icon: 'dumbbell', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
+            { name: 'Ders', icon: 'book-open', color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
+            { name: 'Sağlık', icon: 'heart', color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100' },
+            { name: 'Seyahat', icon: 'plane', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
+            { name: 'Sanat', icon: 'palette', color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100' }
         ];
 
         const STYLE_PRESETS = [
@@ -195,7 +205,7 @@
             const [successMsg, setSuccessMsg] = useState('');
             const [activeTab, setActiveTab] = useState('daily');
             
-            // Tarih ve Veriler - Timezone Fix
+            // Tarih ve Veriler
             const [selectedDate, setSelectedDate] = useState(getLocalDateString());
             const today = getLocalDateString();
             const isPast = selectedDate < today;
@@ -212,8 +222,8 @@
             
             // Profil ve Ayarlar
             const [username, setUsername] = useState('');
-            const [photoURL, setPhotoURL] = useState(null); // Profil fotosu için
-            const fileInputRef = useRef(null); // Dosya seçici referansı
+            const [photoURL, setPhotoURL] = useState(null);
+            const fileInputRef = useRef(null);
 
             const [goalInputs, setGoalInputs] = useState({}); 
             const [newCategoryName, setNewCategoryName] = useState('');
@@ -223,7 +233,6 @@
             const [auth, setAuth] = useState(null);
             const [appId, setAppId] = useState('ocean-planner-v1');
 
-            // --- Firebase Başlatma ---
             useEffect(() => {
                 const firebaseConfig = {
                     apiKey: "AIzaSyCpv-oGPpAISo4aZuUvE0HzMNEbm70lG0o", 
@@ -251,134 +260,82 @@
                 }
             }, []);
 
-            // --- Auth Handlers ---
+            // --- Handlers ---
             const handleLogin = async (email, password) => {
-                if (!auth) return;
-                setAuthLoading(true); setAuthError('');
+                if (!auth) return; setAuthLoading(true); setAuthError('');
                 try { await signInWithEmailAndPassword(auth, email, password); } 
-                catch (error) { setAuthError("Giriş başarısız: " + error.code); } 
-                finally { setAuthLoading(false); }
+                catch (error) { setAuthError("Giriş başarısız: " + error.code); } finally { setAuthLoading(false); }
             };
             const handleSignup = async (email, password) => {
-                if (!auth) return;
-                setAuthLoading(true); setAuthError('');
+                if (!auth) return; setAuthLoading(true); setAuthError('');
                 try { await createUserWithEmailAndPassword(auth, email, password); } 
-                catch (error) { setAuthError("Kayıt başarısız: " + error.code); } 
-                finally { setAuthLoading(false); }
+                catch (error) { setAuthError("Kayıt başarısız: " + error.code); } finally { setAuthLoading(false); }
             };
             const handleResetPassword = async (email) => {
-                if (!auth) return;
-                setAuthLoading(true); setAuthError(''); setSuccessMsg('');
-                try { await sendPasswordResetEmail(auth, email); setSuccessMsg('Sıfırlama linki gönderildi!'); } 
-                catch (error) { setAuthError("Hata: " + error.code); } 
-                finally { setAuthLoading(false); }
+                if (!auth) return; setAuthLoading(true); setAuthError(''); setSuccessMsg('');
+                try { await sendPasswordResetEmail(auth, email); setSuccessMsg('Link gönderildi!'); } 
+                catch (error) { setAuthError("Hata: " + error.code); } finally { setAuthLoading(false); }
             };
             const handleLogout = async () => { if(auth) await signOut(auth); };
 
-            // --- Profil ve Fotoğraf Kaydetme ---
             const handleSaveProfile = async () => {
                 if (!user || !db) return;
                 try {
                     const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'profile');
-                    await setDoc(profileRef, { username, photoURL }, { merge: true }); // photoURL de kaydediliyor
-                    alert("Profil başarıyla güncellendi!");
-                } catch (err) {
-                    console.error("Profil kaydetme hatası:", err);
-                    alert("Bir hata oluştu.");
-                }
+                    await setDoc(profileRef, { username, photoURL }, { merge: true });
+                    alert("Kaydedildi!");
+                } catch (err) { console.error(err); alert("Hata"); }
             };
 
             const handleFileChange = (e) => {
                 const file = e.target.files[0];
                 if (file) {
-                    // Boyut kontrolü (örn: 1MB altı)
-                    if (file.size > 1024 * 1024) {
-                        alert("Fotoğraf boyutu 1MB'dan küçük olmalıdır.");
-                        return;
-                    }
-
+                    if (file.size > 1024 * 1024) { alert("Fotoğraf 1MB'dan küçük olmalı."); return; }
                     const reader = new FileReader();
-                    reader.onloadend = () => {
-                        setPhotoURL(reader.result); // Base64 string olarak kaydet
-                    };
+                    reader.onloadend = () => setPhotoURL(reader.result);
                     reader.readAsDataURL(file);
                 }
             };
 
-            const triggerFileInput = () => {
-                fileInputRef.current.click();
-            };
-
-            // --- Veri Çekme ---
             useEffect(() => {
                 if (!user || !db) return;
-
-                // 1. Kategoriler
                 const categoriesRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'categories');
                 const unsubscribeCategories = onSnapshot(categoriesRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        setCategories(docSnap.data().list || DEFAULT_CATEGORIES);
-                    } else {
-                        setDoc(categoriesRef, { list: DEFAULT_CATEGORIES });
-                        setCategories(DEFAULT_CATEGORIES);
-                    }
+                    if (docSnap.exists()) setCategories(docSnap.data().list || DEFAULT_CATEGORIES);
+                    else { setDoc(categoriesRef, { list: DEFAULT_CATEGORIES }); setCategories(DEFAULT_CATEGORIES); }
                 });
-
-                // 2. Profil (Username ve Foto)
                 const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'profile');
                 const unsubscribeProfile = onSnapshot(profileRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        setUsername(data.username || '');
-                        setPhotoURL(data.photoURL || null);
-                    }
+                    if (docSnap.exists()) { const data = docSnap.data(); setUsername(data.username || ''); setPhotoURL(data.photoURL || null); }
                 });
-
-                // 3. Günlük Loglar
                 const dailyRef = doc(db, 'artifacts', appId, 'users', user.uid, 'daily_logs', selectedDate);
                 const unsubscribeDaily = onSnapshot(dailyRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        setSchedule(data.schedule || {});
-                        setReminders(data.reminders || []);
-                        setWaterCount(data.waterCount || 0);
-                    } else { setSchedule({}); setReminders([]); setWaterCount(0); }
+                    if (docSnap.exists()) { const data = docSnap.data(); setSchedule(data.schedule || {}); setReminders(data.reminders || []); setWaterCount(data.waterCount || 0); } 
+                    else { setSchedule({}); setReminders([]); setWaterCount(0); }
                 });
-
-                // 4. Hedefler
                 const goalsRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'goals');
                 const unsubscribeGoals = onSnapshot(goalsRef, (docSnap) => {
                     if (docSnap.exists()) setGoals(docSnap.data().goals || {});
                 });
-
                 return () => { unsubscribeCategories(); unsubscribeProfile(); unsubscribeDaily(); unsubscribeGoals(); };
             }, [user, db, selectedDate, appId]);
 
-            // --- Kaydetme Fonksiyonları ---
             const saveDailyData = async (newSchedule, newReminders, newWater) => {
                 if (!user || !db || isPast) return;
                 const dailyRef = doc(db, 'artifacts', appId, 'users', user.uid, 'daily_logs', selectedDate);
-                await setDoc(dailyRef, {
-                    schedule: newSchedule !== undefined ? newSchedule : schedule,
-                    reminders: newReminders !== undefined ? newReminders : reminders,
-                    waterCount: newWater !== undefined ? newWater : waterCount,
-                    updatedAt: new Date().toISOString()
-                }, { merge: true });
+                await setDoc(dailyRef, { schedule: newSchedule !== undefined ? newSchedule : schedule, reminders: newReminders !== undefined ? newReminders : reminders, waterCount: newWater !== undefined ? newWater : waterCount, updatedAt: new Date().toISOString() }, { merge: true });
             };
-
             const saveGoalsData = async (updatedGoals) => {
                 if (!user || !db) return;
                 const goalsRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'goals');
                 await setDoc(goalsRef, { goals: updatedGoals }, { merge: true });
             };
-
             const saveCategoriesData = async (updatedCategories) => {
                 if (!user || !db) return;
                 const catRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'categories');
                 await setDoc(catRef, { list: updatedCategories }, { merge: true });
             };
 
-            // --- Basit Handlers ---
             const handleScheduleChange = (time, value) => setSchedule(prev => ({ ...prev, [time]: value }));
             const handleScheduleBlur = () => !isPast && saveDailyData(schedule, undefined, undefined);
             const addReminder = () => { if (newReminder.trim() && !isPast) { const updated = [...reminders, { id: Date.now(), text: newReminder, completed: false }]; setReminders(updated); setNewReminder(''); saveDailyData(undefined, updated, undefined); } };
@@ -386,19 +343,30 @@
             const deleteReminder = (id) => { if(isPast) return; const updated = reminders.filter(r => r.id !== id); setReminders(updated); saveDailyData(undefined, updated, undefined); };
             const updateWater = (val) => { if(isPast) return; const newVal = Math.max(0, val); setWaterCount(newVal); saveDailyData(undefined, undefined, newVal); };
 
-            const addCategory = () => {
-                if (!newCategoryName.trim()) return;
-                const randomStyle = STYLE_PRESETS[Math.floor(Math.random() * STYLE_PRESETS.length)];
-                const newCat = { id: `cat_${Date.now()}`, name: newCategoryName, icon: 'hash', ...randomStyle };
+            // --- Kategori Ekleme Fonksiyonu (GÜNCELLENDİ) ---
+            const addCategory = (preset = null) => {
+                let newCat;
+                if (preset) {
+                    // Preset seçildiğinde
+                    newCat = { id: `cat_${Date.now()}`, ...preset };
+                } else {
+                    // Manuel giriş yapıldığında
+                    if (!newCategoryName.trim()) return;
+                    const randomStyle = STYLE_PRESETS[Math.floor(Math.random() * STYLE_PRESETS.length)];
+                    newCat = { id: `cat_${Date.now()}`, name: newCategoryName, icon: 'hash', ...randomStyle };
+                }
                 const updatedCats = [...categories, newCat];
-                setCategories(updatedCats); saveCategoriesData(updatedCats); setNewCategoryName(''); setShowAddCatInput(false);
+                setCategories(updatedCats); 
+                saveCategoriesData(updatedCats); 
+                setNewCategoryName(''); 
+                setShowAddCatInput(false);
             };
-            const deleteCategory = (catId) => { if (confirm('Kategori silinsin mi?')) { const updatedCats = categories.filter(c => c.id !== catId); setCategories(updatedCats); saveCategoriesData(updatedCats); } };
+
+            const deleteCategory = (catId) => { if (confirm('Silmek istiyor musunuz?')) { const updatedCats = categories.filter(c => c.id !== catId); setCategories(updatedCats); saveCategoriesData(updatedCats); } };
 
             const updateGoalInput = (catId, field, value) => { setGoalInputs(prev => ({ ...prev, [catId]: { ...prev[catId], [field]: value } })); };
             const addGoalItem = (term, catId) => {
-                const inputData = goalInputs[catId] || {};
-                const text = inputData.text; const date = inputData.date;
+                const inputData = goalInputs[catId] || {}; const text = inputData.text; const date = inputData.date;
                 if (!text?.trim()) return;
                 const currentList = Array.isArray(goals[term]?.[catId]) ? goals[term][catId] : [];
                 const updatedList = [...currentList, { id: Date.now(), text, date, completed: false }];
@@ -491,7 +459,9 @@
                                         ))}
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                
+                                {/* --- ANIMASYON İÇİN KEY EKLENDİ (Vade Değişince Yenilenir) --- */}
+                                <div key={activeTerm} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
                                     {categories.map((cat) => {
                                         const items = Array.isArray(goals[activeTerm]?.[cat.id]) ? goals[activeTerm][cat.id] : [];
                                         return (
@@ -546,12 +516,31 @@
                                     
                                     <div className="border-2 border-dashed border-slate-300 rounded-3xl p-6 flex flex-col items-center justify-center text-slate-400 hover:border-sky-300 hover:text-sky-500 transition-all min-h-[350px] lg:h-[400px]">
                                         {showAddCatInput ? (
-                                            <div className="w-full space-y-3 animate-fadeIn">
+                                            <div className="w-full space-y-4 animate-fadeIn">
                                                 <h3 className="text-center font-bold text-slate-600">Yeni Kategori</h3>
                                                 <input type="text" autoFocus placeholder="Kategori Adı" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addCategory()} className="w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-sky-200 outline-none text-slate-700" />
-                                                <div className="flex gap-2">
+                                                
+                                                {/* --- HAZIR KATEGORİ SEÇİMLERİ --- */}
+                                                <div className="space-y-2">
+                                                    <p className="text-xs text-center text-slate-400">Veya Hızlı Seçim:</p>
+                                                    <div className="grid grid-cols-3 gap-2">
+                                                        {PRESET_CATEGORIES.map((preset) => (
+                                                            <button 
+                                                                key={preset.name}
+                                                                onClick={() => addCategory(preset)}
+                                                                className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-medium transition-all hover:scale-105 ${preset.bg} ${preset.color} border ${preset.border}`}
+                                                            >
+                                                                <Icon name={preset.icon} size={16} />
+                                                                <span className="mt-1">{preset.name}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                {/* -------------------------------- */}
+
+                                                <div className="flex gap-2 pt-2">
                                                     <button onClick={() => setShowAddCatInput(false)} className="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 text-xs font-bold">İptal</button>
-                                                    <button onClick={addCategory} className="flex-1 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold">Oluştur</button>
+                                                    <button onClick={() => addCategory()} className="flex-1 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold">Oluştur</button>
                                                 </div>
                                             </div>
                                         ) : (
@@ -565,38 +554,26 @@
                             </div>
                         )}
 
-                        {/* --- PROFİL SEKMESİ (FOTOĞRAF YÜKLEMELİ) --- */}
+                        {/* --- PROFİL SEKMESİ --- */}
                         {activeTab === 'profile' && (
                             <div className="animate-fadeIn max-w-lg mx-auto">
                                 <div className="bg-white/80 backdrop-blur-md rounded-3xl p-8 shadow-xl border border-white">
                                     <div className="flex flex-col items-center mb-8">
-                                        
-                                        {/* Profil Fotoğrafı Alanı - Tıklanabilir */}
                                         <div 
                                             className="w-32 h-32 bg-gradient-to-tr from-sky-400 to-blue-500 rounded-full flex items-center justify-center text-white mb-4 shadow-lg cursor-pointer overflow-hidden relative group hover:ring-4 hover:ring-sky-200 transition-all"
-                                            onClick={triggerFileInput}
-                                            title="Fotoğraf değiştirmek için tıkla"
+                                            onClick={() => fileInputRef.current.click()}
+                                            title="Fotoğrafı değiştir"
                                         >
                                             {photoURL ? (
                                                 <img src={photoURL} alt="Profil" className="w-full h-full object-cover" />
                                             ) : (
                                                 <Icon name="user" size={48} />
                                             )}
-                                            
-                                            {/* Hover Efekti */}
                                             <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <Icon name="camera" size={24} className="text-white" />
                                             </div>
                                         </div>
-                                        
-                                        {/* Gizli Dosya Inputu */}
-                                        <input 
-                                            type="file" 
-                                            ref={fileInputRef} 
-                                            onChange={handleFileChange} 
-                                            accept="image/*" 
-                                            className="hidden" 
-                                        />
+                                        <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
 
                                         <h2 className="text-2xl font-bold text-slate-700">{username || "İsimsiz Kullanıcı"}</h2>
                                         <p className="text-slate-400 text-sm">{user.email}</p>
@@ -606,13 +583,8 @@
                                         <div className="space-y-2">
                                             <label className="text-sm font-semibold text-slate-600 ml-1">Kullanıcı Adı</label>
                                             <div className="flex gap-2">
-                                                <input 
-                                                    type="text" 
-                                                    value={username} 
-                                                    onChange={(e) => setUsername(e.target.value)} 
-                                                    placeholder="Adınızı girin..."
-                                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-200 transition-all"
-                                                />
+                                                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Adınızı girin..."
+                                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-200 transition-all" />
                                                 <button onClick={handleSaveProfile} className="bg-sky-500 hover:bg-sky-600 text-white px-6 rounded-xl font-semibold transition-colors shadow-sm">Kaydet</button>
                                             </div>
                                         </div>
