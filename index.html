@@ -27,14 +27,27 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(14, 165, 233, 0.3); border-radius: 20px; }
         @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
         .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-float-slow { animation: float 8s ease-in-out infinite; }
+        .animate-float-fast { animation: float 4s ease-in-out infinite; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+        .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
         .glass-input { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; }
         .glass-input::placeholder { color: rgba(255, 255, 255, 0.5); }
         .glass-input:focus { background: rgba(255, 255, 255, 0.2); outline: none; border-color: rgba(255, 255, 255, 0.5); }
+        
+        /* Deniz Desenleri İçin */
+        .sea-pattern {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.4;
+            overflow: hidden;
+        }
+        .sea-icon { position: absolute; color: rgba(14, 165, 233, 0.15); }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-700 selection:bg-sky-200 overflow-x-hidden">
+<body class="bg-gradient-to-br from-cyan-50 via-blue-50 to-sky-100 min-h-screen text-slate-700 selection:bg-sky-200 overflow-x-hidden">
 
     <div id="root"></div>
 
@@ -75,6 +88,29 @@
             return <span ref={ref} style={{ display: 'inline-flex' }}></span>;
         };
 
+        // --- Arkaplan Desenleri Bileşeni (YENİ) ---
+        const SeaBackground = () => (
+            <div className="sea-pattern">
+                {/* Sol Üst */}
+                <div className="sea-icon top-10 left-10 animate-float"><Icon name="shell" size={64} /></div>
+                <div className="sea-icon top-40 left-1/4 animate-float-slow"><Icon name="fish" size={48} /></div>
+                
+                {/* Sağ Üst */}
+                <div className="sea-icon top-20 right-20 animate-float-fast"><Icon name="sun" size={80} /></div>
+                <div className="sea-icon top-1/3 right-10 animate-float"><Icon name="anchor" size={56} /></div>
+                
+                {/* Sol Alt */}
+                <div className="sea-icon bottom-20 left-20 animate-float-slow"><Icon name="fish" size={64} style={{transform: 'scaleX(-1)'}} /></div>
+                
+                {/* Sağ Alt */}
+                <div className="sea-icon bottom-10 right-1/4 animate-float"><Icon name="waves" size={100} /></div>
+                
+                {/* Rastgele Baloncuklar */}
+                <div className="sea-icon top-1/2 left-1/2 opacity-10"><Icon name="circle" size={20} /></div>
+                <div className="sea-icon top-2/3 right-1/3 opacity-10"><Icon name="circle" size={12} /></div>
+            </div>
+        );
+
         // --- Renk Hesaplama ---
         const getGoalStyle = (dateStr, isCompleted) => {
             if (isCompleted) return 'bg-slate-50 opacity-60 border-slate-100';
@@ -95,7 +131,6 @@
             return 'bg-white/60 shadow-sm border border-slate-100';
         };
 
-        // --- Varsayılan Kategoriler (Şablon) ---
         const BASE_CATS = [
             { id: 'spor', name: 'Spor', icon: 'dumbbell', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
             { id: 'beslenme', name: 'Beslenme', icon: 'utensils', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-100' },
@@ -105,8 +140,6 @@
             { id: 'finans', name: 'Finans', icon: 'wallet', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' }
         ];
 
-        // --- Her Vade İçin Ayrı Başlangıç Yapısı ---
-        // JSON.parse(JSON.stringify(...)) ile derin kopya oluşturuyoruz ki referanslar karışmasın
         const DEFAULT_CATEGORIES_STRUCT = {
             'Yakın Vade': JSON.parse(JSON.stringify(BASE_CATS)),
             'Orta Vade': JSON.parse(JSON.stringify(BASE_CATS)),
@@ -151,11 +184,8 @@
 
             return (
                 <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-sky-900 via-blue-800 to-indigo-900 text-white p-6 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-                        <div className="absolute top-10 left-10 w-64 h-64 bg-cyan-400 rounded-full blur-3xl"></div>
-                        <div className="absolute bottom-10 right-10 w-96 h-96 bg-blue-500 rounded-full blur-3xl"></div>
-                    </div>
-
+                    <SeaBackground /> {/* Giriş ekranına da desen eklendi */}
+                    
                     <div className="z-10 flex flex-col items-center text-center max-w-sm w-full animate-fadeIn">
                         <div className="bg-white/10 backdrop-blur-lg p-6 rounded-3xl mb-6 animate-float shadow-2xl border border-white/10 flex items-center justify-center w-32 h-32 overflow-hidden">
                             <img src="icon.png" alt="App Icon" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }} />
@@ -220,8 +250,8 @@
             const [reminders, setReminders] = useState([]);
             const [newReminder, setNewReminder] = useState('');
             const [waterCount, setWaterCount] = useState(0);
+            const [bookPages, setBookPages] = useState(0); // YENİ: Kitap Sayfası
             
-            // Kategori State'i artık obje: {'Yakın Vade': [...], 'Orta Vade': [...]}
             const [categories, setCategories] = useState(DEFAULT_CATEGORIES_STRUCT);
             const [activeTerm, setActiveTerm] = useState('Yakın Vade');
             const [goals, setGoals] = useState({ 'Yakın Vade': {}, 'Orta Vade': {}, 'Uzun Vade': {} });
@@ -304,33 +334,32 @@
 
             useEffect(() => {
                 if (!user || !db) return;
-                
-                // 1. Kategoriler (Artık obje olarak çekiyoruz)
-                const categoriesRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'categories_v2'); // v2 yeni yapı için
+                const categoriesRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'categories_v2');
                 const unsubscribeCategories = onSnapshot(categoriesRef, (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data().list;
-                        // Eski veri yapısından (array) yeniye (object) geçiş kontrolü
-                        if (Array.isArray(data)) {
-                            // Eğer eski veriyse varsayılana dön (veya migrate et)
-                            setCategories(DEFAULT_CATEGORIES_STRUCT);
-                        } else {
-                            setCategories(data || DEFAULT_CATEGORIES_STRUCT);
-                        }
+                        if (Array.isArray(data)) setCategories(DEFAULT_CATEGORIES_STRUCT);
+                        else setCategories(data || DEFAULT_CATEGORIES_STRUCT);
                     } else { 
                         setDoc(categoriesRef, { list: DEFAULT_CATEGORIES_STRUCT }); 
                         setCategories(DEFAULT_CATEGORIES_STRUCT); 
                     }
                 });
-
                 const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'profile');
                 const unsubscribeProfile = onSnapshot(profileRef, (docSnap) => {
                     if (docSnap.exists()) { const data = docSnap.data(); setUsername(data.username || ''); setPhotoURL(data.photoURL || null); }
                 });
                 const dailyRef = doc(db, 'artifacts', appId, 'users', user.uid, 'daily_logs', selectedDate);
                 const unsubscribeDaily = onSnapshot(dailyRef, (docSnap) => {
-                    if (docSnap.exists()) { const data = docSnap.data(); setSchedule(data.schedule || {}); setReminders(data.reminders || []); setWaterCount(data.waterCount || 0); } 
-                    else { setSchedule({}); setReminders([]); setWaterCount(0); }
+                    if (docSnap.exists()) { 
+                        const data = docSnap.data(); 
+                        setSchedule(data.schedule || {}); 
+                        setReminders(data.reminders || []); 
+                        setWaterCount(data.waterCount || 0);
+                        setBookPages(data.bookPages || 0); // Kitap verisi
+                    } else { 
+                        setSchedule({}); setReminders([]); setWaterCount(0); setBookPages(0);
+                    }
                 });
                 const goalsRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'goals');
                 const unsubscribeGoals = onSnapshot(goalsRef, (docSnap) => {
@@ -339,10 +368,16 @@
                 return () => { unsubscribeCategories(); unsubscribeProfile(); unsubscribeDaily(); unsubscribeGoals(); };
             }, [user, db, selectedDate, appId]);
 
-            const saveDailyData = async (newSchedule, newReminders, newWater) => {
+            const saveDailyData = async (newSchedule, newReminders, newWater, newBookPages) => {
                 if (!user || !db || isPast) return;
                 const dailyRef = doc(db, 'artifacts', appId, 'users', user.uid, 'daily_logs', selectedDate);
-                await setDoc(dailyRef, { schedule: newSchedule !== undefined ? newSchedule : schedule, reminders: newReminders !== undefined ? newReminders : reminders, waterCount: newWater !== undefined ? newWater : waterCount, updatedAt: new Date().toISOString() }, { merge: true });
+                await setDoc(dailyRef, { 
+                    schedule: newSchedule !== undefined ? newSchedule : schedule, 
+                    reminders: newReminders !== undefined ? newReminders : reminders, 
+                    waterCount: newWater !== undefined ? newWater : waterCount,
+                    bookPages: newBookPages !== undefined ? newBookPages : bookPages,
+                    updatedAt: new Date().toISOString() 
+                }, { merge: true });
             };
             const saveGoalsData = async (updatedGoals) => {
                 if (!user || !db) return;
@@ -356,13 +391,25 @@
             };
 
             const handleScheduleChange = (time, value) => setSchedule(prev => ({ ...prev, [time]: value }));
-            const handleScheduleBlur = () => !isPast && saveDailyData(schedule, undefined, undefined);
-            const addReminder = () => { if (newReminder.trim() && !isPast) { const updated = [...reminders, { id: Date.now(), text: newReminder, completed: false }]; setReminders(updated); setNewReminder(''); saveDailyData(undefined, updated, undefined); } };
-            const toggleReminder = (id) => { if(isPast) return; const updated = reminders.map(r => r.id === id ? { ...r, completed: !r.completed } : r); setReminders(updated); saveDailyData(undefined, updated, undefined); };
-            const deleteReminder = (id) => { if(isPast) return; const updated = reminders.filter(r => r.id !== id); setReminders(updated); saveDailyData(undefined, updated, undefined); };
-            const updateWater = (val) => { if(isPast) return; const newVal = Math.max(0, val); setWaterCount(newVal); saveDailyData(undefined, undefined, newVal); };
+            const handleScheduleBlur = () => !isPast && saveDailyData(schedule, undefined, undefined, undefined);
+            
+            const addReminder = () => { if (newReminder.trim() && !isPast) { const updated = [...reminders, { id: Date.now(), text: newReminder, completed: false }]; setReminders(updated); setNewReminder(''); saveDailyData(undefined, updated, undefined, undefined); } };
+            const toggleReminder = (id) => { if(isPast) return; const updated = reminders.map(r => r.id === id ? { ...r, completed: !r.completed } : r); setReminders(updated); saveDailyData(undefined, updated, undefined, undefined); };
+            const deleteReminder = (id) => { if(isPast) return; const updated = reminders.filter(r => r.id !== id); setReminders(updated); saveDailyData(undefined, updated, undefined, undefined); };
+            
+            const updateWater = (val) => { if(isPast) return; const newVal = Math.max(0, val); setWaterCount(newVal); saveDailyData(undefined, undefined, newVal, undefined); };
+            
+            // --- Kitap Sayfası Güncelleme ---
+            const updateBookPages = (val) => {
+                if(isPast) return;
+                const cleanVal = val === '' ? 0 : parseInt(val, 10);
+                if (!isNaN(cleanVal) && cleanVal >= 0) {
+                    setBookPages(cleanVal);
+                    // Debounce yapmadan anlık kaydetme (daha güvenli olması için blur eklenebilir ama basitlik için böyle)
+                    saveDailyData(undefined, undefined, undefined, cleanVal);
+                }
+            };
 
-            // --- Kategori Yönetimi (Vadeye Özel) ---
             const addCategory = (preset = null) => {
                 let newCat;
                 if (preset) {
@@ -372,29 +419,13 @@
                     const randomStyle = STYLE_PRESETS[Math.floor(Math.random() * STYLE_PRESETS.length)];
                     newCat = { id: `cat_${Date.now()}`, name: newCategoryName, icon: 'hash', ...randomStyle };
                 }
-                
-                // Sadece aktif vadenin listesini güncelle
                 const currentList = categories[activeTerm] || [];
                 const updatedList = [...currentList, newCat];
                 const updatedCategories = { ...categories, [activeTerm]: updatedList };
-                
-                setCategories(updatedCategories); 
-                saveCategoriesData(updatedCategories); 
-                setNewCategoryName(''); 
-                setShowAddCatInput(false);
+                setCategories(updatedCategories); saveCategoriesData(updatedCategories); setNewCategoryName(''); setShowAddCatInput(false);
             };
 
-            const deleteCategory = (catId) => { 
-                if (confirm('Silmek istiyor musunuz?')) { 
-                    // Sadece aktif vadenin listesinden sil
-                    const currentList = categories[activeTerm] || [];
-                    const updatedList = currentList.filter(c => c.id !== catId);
-                    const updatedCategories = { ...categories, [activeTerm]: updatedList };
-                    
-                    setCategories(updatedCategories); 
-                    saveCategoriesData(updatedCategories); 
-                } 
-            };
+            const deleteCategory = (catId) => { if (confirm('Silmek istiyor musunuz?')) { const currentList = categories[activeTerm] || []; const updatedList = currentList.filter(c => c.id !== catId); const updatedCategories = { ...categories, [activeTerm]: updatedList }; setCategories(updatedCategories); saveCategoriesData(updatedCategories); } };
 
             const updateGoalInput = (catId, field, value) => { setGoalInputs(prev => ({ ...prev, [catId]: { ...prev[catId], [field]: value } })); };
             const addGoalItem = (term, catId) => {
@@ -422,8 +453,12 @@
             if (!user) return <LoginScreen onLogin={handleLogin} onSignup={handleSignup} onResetPassword={handleResetPassword} loading={authLoading} error={authError} successMsg={successMsg} />;
 
             return (
-                <div className="bg-gradient-to-br from-cyan-50 via-blue-50 to-sky-100 min-h-screen pb-10">
-                    <div className="max-w-6xl mx-auto px-4 py-4 md:py-8">
+                <div className="min-h-screen pb-10 relative">
+                    {/* --- DENİZ DESENİ ARKAPLAN --- */}
+                    <SeaBackground />
+                    {/* ----------------------------- */}
+
+                    <div className="max-w-6xl mx-auto px-4 py-4 md:py-8 relative z-10">
                         {/* Header */}
                         <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md shadow-sm border-b border-sky-100 rounded-2xl mb-6 px-4 py-3 md:px-8 md:py-4 transition-all">
                             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -465,18 +500,49 @@
                                     </div>
                                 </div>
                                 <div className="space-y-6">
+                                    {/* --- ALINACAKLAR LİSTESİ (GÜNCELLENDİ) --- */}
                                     <div className={`backdrop-blur-sm rounded-3xl p-5 md:p-6 shadow-xl border transition-colors ${isPast ? 'bg-slate-50/80 shadow-slate-200 border-slate-100' : 'bg-white/70 shadow-sky-900/5 border-white'}`}>
-                                        <h2 className={`text-lg md:text-xl font-bold mb-4 flex items-center gap-2 ${isPast ? 'text-slate-600' : 'text-sky-900'}`}><Icon name="anchor" size={20} className={`${isPast ? 'text-slate-400' : 'text-sky-500'}`} /> Görevler</h2>
+                                        <h2 className={`text-lg md:text-xl font-bold mb-4 flex items-center gap-2 ${isPast ? 'text-slate-600' : 'text-sky-900'}`}><Icon name="shopping-cart" size={20} className={`${isPast ? 'text-slate-400' : 'text-sky-500'}`} /> Alınacaklar Listesi</h2>
                                         <div className="flex gap-2 mb-4">
-                                            <input type="text" disabled={isPast} value={newReminder} onChange={(e) => setNewReminder(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addReminder()} placeholder={isPast ? "Kilitli" : "Ekle..."} className={`flex-1 border-none rounded-xl px-4 py-2 text-sm outline-none ${isPast ? 'bg-slate-100 text-slate-400' : 'bg-sky-50/50 focus:ring-2 focus:ring-sky-400'}`} />
+                                            <input type="text" disabled={isPast} value={newReminder} onChange={(e) => setNewReminder(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addReminder()} placeholder={isPast ? "Kilitli" : "Ürün ekle..."} className={`flex-1 border-none rounded-xl px-4 py-2 text-sm outline-none ${isPast ? 'bg-slate-100 text-slate-400' : 'bg-sky-50/50 focus:ring-2 focus:ring-sky-400'}`} />
                                             {!isPast && <button onClick={addReminder} className="bg-sky-500 hover:bg-sky-600 text-white p-2 rounded-xl"><Icon name="plus" size={20} /></button>}
                                         </div>
-                                        <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">{reminders.length === 0 && <div className="text-center text-slate-400 py-4 text-xs italic">Görev yok</div>}{reminders.map((r) => (<div key={r.id} className={`flex items-start gap-2 p-3 rounded-xl transition-all ${r.completed ? 'bg-sky-50 opacity-60' : 'bg-white shadow-sm'} ${isPast ? 'opacity-80' : ''}`}><button onClick={() => toggleReminder(r.id)} disabled={isPast} className={`mt-0.5 ${r.completed ? 'text-sky-500' : 'text-slate-300'}`}><Icon name="check-circle-2" size={18} /></button><span className={`flex-1 text-sm ${r.completed ? 'line-through text-slate-400' : 'text-slate-700'}`}>{r.text}</span>{!isPast && <button onClick={() => deleteReminder(r.id)} className="text-slate-300 hover:text-red-400"><Icon name="trash-2" size={16} /></button>}</div>))}</div>
+                                        <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">{reminders.length === 0 && <div className="text-center text-slate-400 py-4 text-xs italic">Liste boş</div>}{reminders.map((r) => (<div key={r.id} className={`flex items-start gap-2 p-3 rounded-xl transition-all ${r.completed ? 'bg-sky-50 opacity-60' : 'bg-white shadow-sm'} ${isPast ? 'opacity-80' : ''}`}><button onClick={() => toggleReminder(r.id)} disabled={isPast} className={`mt-0.5 ${r.completed ? 'text-sky-500' : 'text-slate-300'}`}><Icon name="check-circle-2" size={18} /></button><span className={`flex-1 text-sm ${r.completed ? 'line-through text-slate-400' : 'text-slate-700'}`}>{r.text}</span>{!isPast && <button onClick={() => deleteReminder(r.id)} className="text-slate-300 hover:text-red-400"><Icon name="trash-2" size={16} /></button>}</div>))}</div>
                                     </div>
+                                    
+                                    {/* SU TAKİBİ */}
                                     <div className={`rounded-3xl p-6 shadow-lg text-white relative overflow-hidden ${isPast ? 'bg-slate-400' : 'bg-gradient-to-br from-blue-500 to-cyan-400'}`}>
                                         <Icon name="droplets" size={80} className="absolute -right-4 -bottom-4 opacity-20" />
                                         <div className="relative z-10"><h3 className="font-bold text-lg mb-1">Su Takibi</h3><div className="flex items-end gap-2 mb-4"><span className="text-5xl font-bold">{waterCount}</span><span className="text-lg mb-2 opacity-80">bardak</span></div><div className="flex gap-2"><button disabled={isPast} onClick={() => updateWater(waterCount - 1)} className="px-4 py-2 bg-white/20 rounded-xl hover:bg-white/30 transition-colors">-</button><button disabled={isPast} onClick={() => updateWater(waterCount + 1)} className="flex-1 py-2 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-colors shadow-sm">+ İçtim</button></div></div>
                                     </div>
+
+                                    {/* --- KİTAP TAKİBİ (YENİ) --- */}
+                                    <div className={`rounded-3xl p-6 shadow-lg text-white relative overflow-hidden ${isPast ? 'bg-slate-400' : 'bg-gradient-to-br from-indigo-500 to-purple-500'}`}>
+                                        <Icon name="book-open" size={80} className="absolute -right-4 -bottom-4 opacity-20" />
+                                        <div className="relative z-10">
+                                            <h3 className="font-bold text-lg mb-1">Kitap Takibi</h3>
+                                            <div className="flex flex-col gap-2">
+                                                <div className="flex items-end gap-2 mb-2">
+                                                    <span className="text-3xl font-bold">{bookPages}</span>
+                                                    <span className="text-sm mb-1 opacity-80">sayfa okundu</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <button disabled={isPast} onClick={() => updateBookPages(bookPages - 1)} className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 text-lg font-bold">-</button>
+                                                    <input 
+                                                        type="number" 
+                                                        disabled={isPast}
+                                                        value={bookPages || ''} 
+                                                        onChange={(e) => updateBookPages(e.target.value)} 
+                                                        placeholder="0"
+                                                        className="w-full bg-white text-indigo-900 font-bold text-center py-1.5 rounded-lg outline-none focus:ring-2 focus:ring-white/50" 
+                                                        min="0"
+                                                    />
+                                                    <button disabled={isPast} onClick={() => updateBookPages((bookPages || 0) + 1)} className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 text-lg font-bold">+</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* --------------------------- */}
                                 </div>
                             </div>
                         )}
@@ -492,7 +558,6 @@
                                     </div>
                                 </div>
                                 
-                                {/* --- ANIMASYON İÇİN KEY EKLENDİ --- */}
                                 <div key={activeTerm} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
                                     {(categories[activeTerm] || []).map((cat) => {
                                         const items = Array.isArray(goals[activeTerm]?.[cat.id]) ? goals[activeTerm][cat.id] : [];
@@ -552,7 +617,6 @@
                                                 <h3 className="text-center font-bold text-slate-600">Yeni Kategori</h3>
                                                 <input type="text" autoFocus placeholder="Kategori Adı" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addCategory()} className="w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-sky-200 outline-none text-slate-700" />
                                                 
-                                                {/* --- HAZIR KATEGORİ SEÇİMLERİ --- */}
                                                 <div className="space-y-2">
                                                     <p className="text-xs text-center text-slate-400">Veya Hızlı Seçim:</p>
                                                     <div className="grid grid-cols-3 gap-2">
