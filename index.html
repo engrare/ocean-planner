@@ -95,8 +95,8 @@
             return 'bg-white/60 shadow-sm border border-slate-100';
         };
 
-        // --- Sabitler & Varsayılan Veriler ---
-        const DEFAULT_CATEGORIES = [
+        // --- Varsayılan Kategoriler (Şablon) ---
+        const BASE_CATS = [
             { id: 'spor', name: 'Spor', icon: 'dumbbell', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
             { id: 'beslenme', name: 'Beslenme', icon: 'utensils', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-100' },
             { id: 'bakim', name: 'Bakım', icon: 'sparkles', color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100' },
@@ -105,7 +105,14 @@
             { id: 'finans', name: 'Finans', icon: 'wallet', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' }
         ];
 
-        // --- HAZIR KATEGORİ PRESETLERİ (YENİ) ---
+        // --- Her Vade İçin Ayrı Başlangıç Yapısı ---
+        // JSON.parse(JSON.stringify(...)) ile derin kopya oluşturuyoruz ki referanslar karışmasın
+        const DEFAULT_CATEGORIES_STRUCT = {
+            'Yakın Vade': JSON.parse(JSON.stringify(BASE_CATS)),
+            'Orta Vade': JSON.parse(JSON.stringify(BASE_CATS)),
+            'Uzun Vade': JSON.parse(JSON.stringify(BASE_CATS))
+        };
+
         const PRESET_CATEGORIES = [
             { name: 'Proje', icon: 'briefcase', color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100' },
             { name: 'Spor', icon: 'dumbbell', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
@@ -205,22 +212,20 @@
             const [successMsg, setSuccessMsg] = useState('');
             const [activeTab, setActiveTab] = useState('daily');
             
-            // Tarih ve Veriler
             const [selectedDate, setSelectedDate] = useState(getLocalDateString());
             const today = getLocalDateString();
             const isPast = selectedDate < today;
 
-            // Veri State'leri
             const [schedule, setSchedule] = useState({});
             const [reminders, setReminders] = useState([]);
             const [newReminder, setNewReminder] = useState('');
             const [waterCount, setWaterCount] = useState(0);
             
-            const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+            // Kategori State'i artık obje: {'Yakın Vade': [...], 'Orta Vade': [...]}
+            const [categories, setCategories] = useState(DEFAULT_CATEGORIES_STRUCT);
             const [activeTerm, setActiveTerm] = useState('Yakın Vade');
             const [goals, setGoals] = useState({ 'Yakın Vade': {}, 'Orta Vade': {}, 'Uzun Vade': {} });
             
-            // Profil ve Ayarlar
             const [username, setUsername] = useState('');
             const [photoURL, setPhotoURL] = useState(null);
             const fileInputRef = useRef(null);
@@ -299,11 +304,25 @@
 
             useEffect(() => {
                 if (!user || !db) return;
-                const categoriesRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'categories');
+                
+                // 1. Kategoriler (Artık obje olarak çekiyoruz)
+                const categoriesRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'categories_v2'); // v2 yeni yapı için
                 const unsubscribeCategories = onSnapshot(categoriesRef, (docSnap) => {
-                    if (docSnap.exists()) setCategories(docSnap.data().list || DEFAULT_CATEGORIES);
-                    else { setDoc(categoriesRef, { list: DEFAULT_CATEGORIES }); setCategories(DEFAULT_CATEGORIES); }
+                    if (docSnap.exists()) {
+                        const data = docSnap.data().list;
+                        // Eski veri yapısından (array) yeniye (object) geçiş kontrolü
+                        if (Array.isArray(data)) {
+                            // Eğer eski veriyse varsayılana dön (veya migrate et)
+                            setCategories(DEFAULT_CATEGORIES_STRUCT);
+                        } else {
+                            setCategories(data || DEFAULT_CATEGORIES_STRUCT);
+                        }
+                    } else { 
+                        setDoc(categoriesRef, { list: DEFAULT_CATEGORIES_STRUCT }); 
+                        setCategories(DEFAULT_CATEGORIES_STRUCT); 
+                    }
                 });
+
                 const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'profile');
                 const unsubscribeProfile = onSnapshot(profileRef, (docSnap) => {
                     if (docSnap.exists()) { const data = docSnap.data(); setUsername(data.username || ''); setPhotoURL(data.photoURL || null); }
@@ -332,7 +351,7 @@
             };
             const saveCategoriesData = async (updatedCategories) => {
                 if (!user || !db) return;
-                const catRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'categories');
+                const catRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'categories_v2');
                 await setDoc(catRef, { list: updatedCategories }, { merge: true });
             };
 
@@ -343,26 +362,39 @@
             const deleteReminder = (id) => { if(isPast) return; const updated = reminders.filter(r => r.id !== id); setReminders(updated); saveDailyData(undefined, updated, undefined); };
             const updateWater = (val) => { if(isPast) return; const newVal = Math.max(0, val); setWaterCount(newVal); saveDailyData(undefined, undefined, newVal); };
 
-            // --- Kategori Ekleme Fonksiyonu (GÜNCELLENDİ) ---
+            // --- Kategori Yönetimi (Vadeye Özel) ---
             const addCategory = (preset = null) => {
                 let newCat;
                 if (preset) {
-                    // Preset seçildiğinde
                     newCat = { id: `cat_${Date.now()}`, ...preset };
                 } else {
-                    // Manuel giriş yapıldığında
                     if (!newCategoryName.trim()) return;
                     const randomStyle = STYLE_PRESETS[Math.floor(Math.random() * STYLE_PRESETS.length)];
                     newCat = { id: `cat_${Date.now()}`, name: newCategoryName, icon: 'hash', ...randomStyle };
                 }
-                const updatedCats = [...categories, newCat];
-                setCategories(updatedCats); 
-                saveCategoriesData(updatedCats); 
+                
+                // Sadece aktif vadenin listesini güncelle
+                const currentList = categories[activeTerm] || [];
+                const updatedList = [...currentList, newCat];
+                const updatedCategories = { ...categories, [activeTerm]: updatedList };
+                
+                setCategories(updatedCategories); 
+                saveCategoriesData(updatedCategories); 
                 setNewCategoryName(''); 
                 setShowAddCatInput(false);
             };
 
-            const deleteCategory = (catId) => { if (confirm('Silmek istiyor musunuz?')) { const updatedCats = categories.filter(c => c.id !== catId); setCategories(updatedCats); saveCategoriesData(updatedCats); } };
+            const deleteCategory = (catId) => { 
+                if (confirm('Silmek istiyor musunuz?')) { 
+                    // Sadece aktif vadenin listesinden sil
+                    const currentList = categories[activeTerm] || [];
+                    const updatedList = currentList.filter(c => c.id !== catId);
+                    const updatedCategories = { ...categories, [activeTerm]: updatedList };
+                    
+                    setCategories(updatedCategories); 
+                    saveCategoriesData(updatedCategories); 
+                } 
+            };
 
             const updateGoalInput = (catId, field, value) => { setGoalInputs(prev => ({ ...prev, [catId]: { ...prev[catId], [field]: value } })); };
             const addGoalItem = (term, catId) => {
@@ -460,9 +492,9 @@
                                     </div>
                                 </div>
                                 
-                                {/* --- ANIMASYON İÇİN KEY EKLENDİ (Vade Değişince Yenilenir) --- */}
+                                {/* --- ANIMASYON İÇİN KEY EKLENDİ --- */}
                                 <div key={activeTerm} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
-                                    {categories.map((cat) => {
+                                    {(categories[activeTerm] || []).map((cat) => {
                                         const items = Array.isArray(goals[activeTerm]?.[cat.id]) ? goals[activeTerm][cat.id] : [];
                                         return (
                                             <div key={cat.id} className={`bg-white/80 backdrop-blur-md rounded-3xl p-1 shadow-lg border border-white flex flex-col h-auto min-h-[350px] lg:h-[400px] relative group`}>
@@ -536,7 +568,6 @@
                                                         ))}
                                                     </div>
                                                 </div>
-                                                {/* -------------------------------- */}
 
                                                 <div className="flex gap-2 pt-2">
                                                     <button onClick={() => setShowAddCatInput(false)} className="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 text-xs font-bold">İptal</button>
