@@ -26,7 +26,7 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(14, 165, 233, 0.3); border-radius: 20px; }
         
-        /* --- GÜNCELLENMİŞ ANIMASYONLAR (Daha Belirgin Hareketler) --- */
+        /* --- ANIMASYONLAR --- */
         @keyframes float { 
             0%, 100% { transform: translateY(0) rotate(0deg); } 
             50% { transform: translateY(-30px) rotate(5deg); } 
@@ -51,23 +51,22 @@
         .glass-input::placeholder { color: rgba(255, 255, 255, 0.7); }
         .glass-input:focus { background: rgba(255, 255, 255, 0.2); outline: none; border-color: rgba(255, 255, 255, 0.8); }
         
-        /* --- DENİZ DESENLERİ (Daha Belirgin Renkler) --- */
+        /* --- DENİZ DESENLERİ --- */
         .sea-pattern {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none;
-            z-index: 0; /* İçeriğin hemen arkasında */
+            z-index: 0;
             overflow: hidden;
         }
-        /* Renkler koyulaştırıldı ve opaklık artırıldı */
         .sea-icon { 
             position: absolute; 
-            color: rgba(2, 132, 199, 0.3); /* Sky-600 rengi, %30 opaklık */
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); /* Hafif gölge */
+            color: rgba(2, 132, 199, 0.3); 
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
         }
         .content-wrapper {
             position: relative;
-            z-index: 10; /* İçeriği desenlerin üstüne çıkarır */
+            z-index: 10;
         }
     </style>
 </head>
@@ -112,48 +111,29 @@
             return <span ref={ref} style={{ display: 'inline-flex', ...style }}></span>;
         };
 
-        // --- Arkaplan Desenleri Bileşeni (GÜNCELLENDİ) ---
+        // --- Arkaplan Desenleri ---
         const SeaBackground = () => (
             <div className="sea-pattern">
-                {/* Sol Üst */}
-                <div className="sea-icon top-10 left-10 animate-float"><Icon name="shell" size={80} /></div>
+                <div className="sea-icon top-10 left-10 animate-float"><Icon name="shell" size={80} style={{ color: 'rgba(244, 114, 182, 0.4)' }} /></div>
                 <div className="sea-icon top-48 left-1/4 animate-float-slow"><Icon name="fish" size={60} /></div>
-                
-                {/* Sağ Üst */}
-                <div className="sea-icon top-20 right-20 animate-float-fast"><Icon name="sun" size={100} style={{color: 'rgba(251, 191, 36, 0.4)'}} /></div>
-                <div className="sea-icon top-1/3 right-10 animate-float"><Icon name="anchor" size={70} /></div>
-                
-                {/* Sol Alt */}
+                <div className="sea-icon top-20 right-20 animate-float-fast"><Icon name="sun" size={100} style={{color: 'rgba(251, 191, 36, 0.5)'}} /></div>
+                <div className="sea-icon top-1/3 right-10 animate-float"><Icon name="star" size={70} style={{ color: 'rgba(251, 146, 60, 0.5)' }} /></div>
                 <div className="sea-icon bottom-32 left-10 animate-float-slow"><Icon name="fish" size={80} style={{transform: 'scaleX(-1)'}} /></div>
-                <div className="sea-icon bottom-10 left-1/3 animate-float"><Icon name="star" size={50} /></div>
-                
-                {/* Sağ Alt */}
-                <div className="sea-icon bottom-10 right-1/4 animate-float"><Icon name="waves" size={120} /></div>
+                <div className="sea-icon bottom-10 left-1/3 animate-float"><Icon name="star" size={50} style={{ color: 'rgba(251, 146, 60, 0.4)' }} /></div>
+                <div className="sea-icon bottom-10 right-1/4 animate-float"><Icon name="waves" size={120} style={{ color: 'rgba(34, 211, 238, 0.3)' }} /></div>
                 <div className="sea-icon bottom-40 right-10 animate-float-fast"><Icon name="sailboat" size={60} /></div>
-                
-                {/* Orta Rastgele */}
                 <div className="sea-icon top-1/2 left-1/2 animate-float-slow opacity-20"><Icon name="cloud" size={150} /></div>
+                <div className="sea-icon bottom-1/4 left-20 animate-float-fast"><Icon name="shell" size={40} style={{ color: 'rgba(244, 114, 182, 0.3)' }} /></div>
             </div>
         );
 
-        // --- Renk Hesaplama ---
-        const getGoalStyle = (dateStr, isCompleted) => {
+        // --- GÜNCELLENEN KISIM: Renk Hesaplama ---
+        // Tarih farkı hesaplaması kaldırıldı, sabit mavi stil eklendi.
+        const getGoalStyle = (endDateStr, isCompleted) => {
             if (isCompleted) return 'bg-slate-50 opacity-60 border-slate-100';
-            if (!dateStr) return 'bg-white/60 shadow-sm border border-slate-100';
-
-            const today = new Date(getLocalDateString());
-            const target = new Date(dateStr);
-            const diffTime = target - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            const diffMonths = diffDays / 30;
-
-            if (diffMonths < 0) return 'bg-red-50 border border-red-100 text-red-900 shadow-sm'; 
-            if (diffMonths < 3) return 'bg-green-100 border border-green-200 text-green-900 shadow-sm'; 
-            else if (diffMonths >= 3 && diffMonths < 6) return 'bg-pink-100 border border-pink-200 text-pink-900 shadow-sm';
-            else if (diffMonths >= 6 && diffMonths <= 12) return 'bg-orange-100 border border-orange-200 text-orange-900 shadow-sm'; 
-            else if (diffMonths > 12) return 'bg-blue-100 border border-blue-200 text-blue-900 shadow-sm'; 
-
-            return 'bg-white/60 shadow-sm border border-slate-100';
+            
+            // Tarih ne olursa olsun sabit mavi stil
+            return 'bg-sky-100 border border-sky-200 text-sky-900 shadow-sm';
         };
 
         const BASE_CATS = [
@@ -286,9 +266,14 @@
             const [photoURL, setPhotoURL] = useState(null);
             const fileInputRef = useRef(null);
 
+            // GÜNCEL: Input state'leri - startDate ve endDate eklendi
             const [goalInputs, setGoalInputs] = useState({}); 
             const [newCategoryName, setNewCategoryName] = useState('');
             const [showAddCatInput, setShowAddCatInput] = useState(false);
+
+            // DÜZENLEME MODU İÇİN STATE
+            const [editingGoalId, setEditingGoalId] = useState(null);
+            const [editValues, setEditValues] = useState({ text: '', startDate: '', endDate: '' });
 
             const [db, setDb] = useState(null);
             const [auth, setAuth] = useState(null);
@@ -450,15 +435,28 @@
 
             const deleteCategory = (catId) => { if (confirm('Silmek istiyor musunuz?')) { const currentList = categories[activeTerm] || []; const updatedList = currentList.filter(c => c.id !== catId); const updatedCategories = { ...categories, [activeTerm]: updatedList }; setCategories(updatedCategories); saveCategoriesData(updatedCategories); } };
 
+            // --- Hedef Ekleme / Güncelleme ---
             const updateGoalInput = (catId, field, value) => { setGoalInputs(prev => ({ ...prev, [catId]: { ...prev[catId], [field]: value } })); };
+            
             const addGoalItem = (term, catId) => {
-                const inputData = goalInputs[catId] || {}; const text = inputData.text; const date = inputData.date;
+                const inputData = goalInputs[catId] || {}; 
+                const text = inputData.text; 
+                const startDate = inputData.startDate; // YENİ
+                const endDate = inputData.endDate;      // YENİ
+                
                 if (!text?.trim()) return;
+                
                 const currentList = Array.isArray(goals[term]?.[catId]) ? goals[term][catId] : [];
-                const updatedList = [...currentList, { id: Date.now(), text, date, completed: false }];
+                // Obje yapısına startDate ve endDate eklendi
+                const updatedList = [...currentList, { id: Date.now(), text, startDate, endDate, completed: false }];
                 const newGoals = { ...goals, [term]: { ...goals[term], [catId]: updatedList } };
-                setGoals(newGoals); setGoalInputs(prev => ({ ...prev, [catId]: { text: '', date: '' } })); saveGoalsData(newGoals);
+                
+                setGoals(newGoals); 
+                // Inputları temizle
+                setGoalInputs(prev => ({ ...prev, [catId]: { text: '', startDate: '', endDate: '' } })); 
+                saveGoalsData(newGoals);
             };
+
             const toggleGoalItem = (term, catId, itemId) => {
                 const currentList = goals[term]?.[catId]; if (!Array.isArray(currentList)) return;
                 const updatedList = currentList.map(i => i.id === itemId ? { ...i, completed: !i.completed } : i);
@@ -472,15 +470,45 @@
                 setGoals(newGoals); saveGoalsData(newGoals);
             };
 
+            // --- DÜZENLEME (EDIT) FONKSİYONLARI ---
+            const startEdit = (item) => {
+                setEditingGoalId(item.id);
+                setEditValues({ text: item.text, startDate: item.startDate || '', endDate: item.endDate || '' });
+            };
+
+            const cancelEdit = () => {
+                setEditingGoalId(null);
+                setEditValues({ text: '', startDate: '', endDate: '' });
+            };
+
+            const saveEdit = (term, catId, itemId) => {
+                const currentList = goals[term]?.[catId]; 
+                if (!Array.isArray(currentList)) return;
+                
+                const updatedList = currentList.map(i => {
+                    if (i.id === itemId) {
+                        return { 
+                            ...i, 
+                            text: editValues.text, 
+                            startDate: editValues.startDate, 
+                            endDate: editValues.endDate 
+                        };
+                    }
+                    return i;
+                });
+
+                const newGoals = { ...goals, [term]: { ...goals[term], [catId]: updatedList } };
+                setGoals(newGoals); 
+                saveGoalsData(newGoals);
+                setEditingGoalId(null);
+            };
+
             if (appLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-sky-600"><Icon name="loader-2" size={40} className="animate-spin" /></div>;
             if (!user) return <LoginScreen onLogin={handleLogin} onSignup={handleSignup} onResetPassword={handleResetPassword} loading={authLoading} error={authError} successMsg={successMsg} />;
 
             return (
                 <div className="min-h-screen pb-10 relative">
-                    {/* --- DENİZ DESENİ ARKAPLAN --- */}
                     <SeaBackground />
-                    {/* ----------------------------- */}
-
                     <div className="max-w-6xl mx-auto px-4 py-4 md:py-8 relative z-10 content-wrapper">
                         {/* Header */}
                         <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md shadow-sm border-b border-sky-100 rounded-2xl mb-6 px-4 py-3 md:px-8 md:py-4 transition-all">
@@ -523,7 +551,6 @@
                                     </div>
                                 </div>
                                 <div className="space-y-6">
-                                    {/* --- ALINACAKLAR LİSTESİ --- */}
                                     <div className={`backdrop-blur-sm rounded-3xl p-5 md:p-6 shadow-xl border transition-colors ${isPast ? 'bg-slate-50/80 shadow-slate-200 border-slate-100' : 'bg-white/70 shadow-sky-900/5 border-white'}`}>
                                         <h2 className={`text-lg md:text-xl font-bold mb-4 flex items-center gap-2 ${isPast ? 'text-slate-600' : 'text-sky-900'}`}><Icon name="shopping-cart" size={20} className={`${isPast ? 'text-slate-400' : 'text-sky-500'}`} /> Alınacaklar Listesi</h2>
                                         <div className="flex gap-2 mb-4">
@@ -532,38 +559,13 @@
                                         </div>
                                         <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar">{reminders.length === 0 && <div className="text-center text-slate-400 py-4 text-xs italic">Liste boş</div>}{reminders.map((r) => (<div key={r.id} className={`flex items-start gap-2 p-3 rounded-xl transition-all ${r.completed ? 'bg-sky-50 opacity-60' : 'bg-white shadow-sm'} ${isPast ? 'opacity-80' : ''}`}><button onClick={() => toggleReminder(r.id)} disabled={isPast} className={`mt-0.5 ${r.completed ? 'text-sky-500' : 'text-slate-300'}`}><Icon name="check-circle-2" size={18} /></button><span className={`flex-1 text-sm ${r.completed ? 'line-through text-slate-400' : 'text-slate-700'}`}>{r.text}</span>{!isPast && <button onClick={() => deleteReminder(r.id)} className="text-slate-300 hover:text-red-400"><Icon name="trash-2" size={16} /></button>}</div>))}</div>
                                     </div>
-                                    
-                                    {/* SU TAKİBİ */}
                                     <div className={`rounded-3xl p-6 shadow-lg text-white relative overflow-hidden ${isPast ? 'bg-slate-400' : 'bg-gradient-to-br from-blue-500 to-cyan-400'}`}>
                                         <Icon name="droplets" size={80} className="absolute -right-4 -bottom-4 opacity-20" />
-                                        <div className="relative z-10"><h3 className="font-bold text-lg mb-1">Su Takibi</h3><div className="flex items-end gap-2 mb-4"><span className="text-5xl font-bold">{waterCount}</span><span className="text-lg mb-2 opacity-80">bardak</span></div><div className="flex gap-2"><button disabled={isPast} onClick={() => updateWater(waterCount - 1)} className="px-4 py-2 bg-white/20 rounded-xl hover:bg-white/30 transition-colors">-</button><button disabled={isPast} onClick={() => updateWater(waterCount + 1)} className="flex-1 py-2 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-colors shadow-sm">+ İçtim</button></div></div>
+                                        <div className="relative z-10"><h3 className="font-bold text-lg mb-1">Su Takibi</h3><div className="flex flex-col mb-4"><div className="flex items-end gap-2"><span className="text-5xl font-bold">{waterCount}</span><span className="text-lg mb-2 opacity-80">bardak</span></div><span className="text-sm font-medium opacity-90 bg-white/20 px-2 py-0.5 rounded-md inline-block w-fit mt-1">Toplam: {waterCount * 200} ml</span></div><div className="flex gap-2"><button disabled={isPast} onClick={() => updateWater(waterCount - 1)} className="px-4 py-2 bg-white/20 rounded-xl hover:bg-white/30 transition-colors">-</button><button disabled={isPast} onClick={() => updateWater(waterCount + 1)} className="flex-1 py-2 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-colors shadow-sm">+ İçtim</button></div></div>
                                     </div>
-
-                                    {/* --- KİTAP TAKİBİ --- */}
                                     <div className={`rounded-3xl p-6 shadow-lg text-white relative overflow-hidden ${isPast ? 'bg-slate-400' : 'bg-gradient-to-br from-indigo-500 to-purple-500'}`}>
                                         <Icon name="book-open" size={80} className="absolute -right-4 -bottom-4 opacity-20" />
-                                        <div className="relative z-10">
-                                            <h3 className="font-bold text-lg mb-1">Kitap Takibi</h3>
-                                            <div className="flex flex-col gap-2">
-                                                <div className="flex items-end gap-2 mb-2">
-                                                    <span className="text-3xl font-bold">{bookPages}</span>
-                                                    <span className="text-sm mb-1 opacity-80">sayfa okundu</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <button disabled={isPast} onClick={() => updateBookPages(bookPages - 1)} className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 text-lg font-bold">-</button>
-                                                    <input 
-                                                        type="number" 
-                                                        disabled={isPast}
-                                                        value={bookPages || ''} 
-                                                        onChange={(e) => updateBookPages(e.target.value)} 
-                                                        placeholder="0"
-                                                        className="w-full bg-white text-indigo-900 font-bold text-center py-1.5 rounded-lg outline-none focus:ring-2 focus:ring-white/50" 
-                                                        min="0"
-                                                    />
-                                                    <button disabled={isPast} onClick={() => updateBookPages((bookPages || 0) + 1)} className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 text-lg font-bold">+</button>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <div className="relative z-10"><h3 className="font-bold text-lg mb-1">Kitap Takibi</h3><div className="flex flex-col gap-2"><div className="flex items-end gap-2 mb-2"><span className="text-3xl font-bold">{bookPages}</span><span className="text-sm mb-1 opacity-80">sayfa okundu</span></div><div className="flex items-center gap-2"><button disabled={isPast} onClick={() => updateBookPages(bookPages - 1)} className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 text-lg font-bold">-</button><input type="number" disabled={isPast} value={bookPages || ''} onChange={(e) => updateBookPages(e.target.value)} placeholder="0" className="w-full bg-white text-indigo-900 font-bold text-center py-1.5 rounded-lg outline-none focus:ring-2 focus:ring-white/50" min="0"/><button disabled={isPast} onClick={() => updateBookPages((bookPages || 0) + 1)} className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 text-lg font-bold">+</button></div></div></div>
                                     </div>
                                 </div>
                             </div>
@@ -597,35 +599,91 @@
                                                     <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1 mb-4 min-h-[100px]">
                                                         {items.length === 0 && <div className="h-full flex flex-col items-center justify-center text-slate-400 text-xs italic opacity-70">Henüz hedef yok</div>}
                                                         {items.map((item) => (
-                                                            <div key={item.id} className={`flex items-start gap-2 p-2.5 rounded-xl text-sm transition-all group/item ${getGoalStyle(item.date, item.completed)}`}>
-                                                                <button onClick={() => toggleGoalItem(activeTerm, cat.id, item.id)} className={`mt-0.5 ${item.completed ? 'text-sky-500' : 'text-slate-400 hover:text-sky-500'}`}><Icon name="check-circle-2" size={16} /></button>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className={`break-words ${item.completed ? 'line-through text-slate-400' : 'text-slate-700 font-medium'}`}>{item.text}</div>
-                                                                    {item.date && (
-                                                                        <div className={`flex items-center gap-1 text-[10px] mt-1 ${item.completed ? 'text-slate-400' : 'opacity-80'}`}>
-                                                                            <Icon name="calendar" size={10} /> {item.date}
+                                                            // --- LİSTE ELEMANI (GÖRÜNÜM VEYA DÜZENLEME MODU) ---
+                                                            <div key={item.id} className={`flex items-start gap-2 p-2.5 rounded-xl text-sm transition-all group/item ${getGoalStyle(item.endDate, item.completed)}`}>
+                                                                
+                                                                {editingGoalId === item.id ? (
+                                                                    // DÜZENLEME MODU
+                                                                    <div className="w-full flex flex-col gap-2">
+                                                                        <input 
+                                                                            type="text" 
+                                                                            value={editValues.text} 
+                                                                            onChange={(e) => setEditValues({...editValues, text: e.target.value})}
+                                                                            className="w-full bg-white/50 border border-slate-300 rounded px-2 py-1 text-xs"
+                                                                        />
+                                                                        <div className="flex gap-1">
+                                                                            <input 
+                                                                                type="date" 
+                                                                                value={editValues.startDate} 
+                                                                                onChange={(e) => setEditValues({...editValues, startDate: e.target.value})}
+                                                                                className="w-1/2 bg-white/50 border border-slate-300 rounded px-1 py-1 text-[10px]"
+                                                                            />
+                                                                            <input 
+                                                                                type="date" 
+                                                                                value={editValues.endDate} 
+                                                                                onChange={(e) => setEditValues({...editValues, endDate: e.target.value})}
+                                                                                className="w-1/2 bg-white/50 border border-slate-300 rounded px-1 py-1 text-[10px]"
+                                                                            />
                                                                         </div>
-                                                                    )}
-                                                                </div>
-                                                                <button onClick={() => deleteGoalItem(activeTerm, cat.id, item.id)} className="text-slate-400 hover:text-red-500 opacity-100 lg:opacity-0 lg:group-hover/item:opacity-100 transition-opacity"><Icon name="x" size={16} /></button>
+                                                                        <div className="flex justify-end gap-2">
+                                                                            <button onClick={cancelEdit} className="text-xs text-red-500 hover:text-red-700">İptal</button>
+                                                                            <button onClick={() => saveEdit(activeTerm, cat.id, item.id)} className="text-xs text-green-600 hover:text-green-800 font-bold">Kaydet</button>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    // GÖRÜNTÜLEME MODU
+                                                                    <>
+                                                                        <button onClick={() => toggleGoalItem(activeTerm, cat.id, item.id)} className={`mt-0.5 ${item.completed ? 'text-sky-500' : 'text-slate-400 hover:text-sky-500'}`}><Icon name="check-circle-2" size={16} /></button>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <div className={`break-words ${item.completed ? 'line-through text-slate-400' : 'text-slate-700 font-medium'}`}>{item.text}</div>
+                                                                            <div className={`flex flex-wrap items-center gap-2 text-[10px] mt-1 ${item.completed ? 'text-slate-400' : 'opacity-80'}`}>
+                                                                                {(item.startDate || item.endDate) && (
+                                                                                    <span className="flex items-center gap-1">
+                                                                                        <Icon name="calendar" size={10} /> 
+                                                                                        {item.startDate ? item.startDate.split('-').slice(1).join('/') : '?'} 
+                                                                                        {' -> '} 
+                                                                                        {item.endDate ? item.endDate.split('-').slice(1).join('/') : '?'}
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                        
+                                                                        <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                                                            <button onClick={() => startEdit(item)} className="text-slate-400 hover:text-blue-500"><Icon name="pencil" size={14} /></button>
+                                                                            <button onClick={() => deleteGoalItem(activeTerm, cat.id, item.id)} className="text-slate-400 hover:text-red-500"><Icon name="x" size={16} /></button>
+                                                                        </div>
+                                                                    </>
+                                                                )}
                                                             </div>
                                                         ))}
                                                     </div>
                                                     
                                                     <div className="relative mt-auto space-y-2">
+                                                        <input type="text" placeholder="Hedef..." 
+                                                            value={goalInputs[cat.id]?.text || ''} 
+                                                            onChange={(e) => updateGoalInput(cat.id, 'text', e.target.value)} 
+                                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all" />
+                                                        
+                                                        {/* TARİH ARALIĞI GİRİŞİ */}
                                                         <div className="flex gap-1">
-                                                            <input type="text" placeholder="Hedef..." 
-                                                                value={goalInputs[cat.id]?.text || ''} 
-                                                                onChange={(e) => updateGoalInput(cat.id, 'text', e.target.value)} 
-                                                                onKeyDown={(e) => e.key === 'Enter' && addGoalItem(activeTerm, cat.id)}
-                                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-3 pr-2 py-2 text-sm focus:ring-2 focus:ring-sky-200 focus:bg-white transition-all" />
-                                                            <input type="date" 
-                                                                value={goalInputs[cat.id]?.date || ''}
-                                                                onChange={(e) => updateGoalInput(cat.id, 'date', e.target.value)}
-                                                                className="w-10 bg-slate-50 border border-slate-200 rounded-xl px-1 text-transparent focus:text-slate-600 focus:w-auto transition-all cursor-pointer" 
-                                                                title="Tarih Ekle"
-                                                            />
+                                                            <div className="relative w-1/2">
+                                                                <span className="absolute left-2 top-1.5 text-[10px] text-slate-400 pointer-events-none">Başlangıç</span>
+                                                                <input type="date" 
+                                                                    value={goalInputs[cat.id]?.startDate || ''}
+                                                                    onChange={(e) => updateGoalInput(cat.id, 'startDate', e.target.value)}
+                                                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-1 pt-4 pb-1 text-[10px] text-slate-600 focus:bg-white transition-all" 
+                                                                />
+                                                            </div>
+                                                            <div className="relative w-1/2">
+                                                                <span className="absolute left-2 top-1.5 text-[10px] text-slate-400 pointer-events-none">Bitiş</span>
+                                                                <input type="date" 
+                                                                    value={goalInputs[cat.id]?.endDate || ''}
+                                                                    onChange={(e) => updateGoalInput(cat.id, 'endDate', e.target.value)}
+                                                                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-1 pt-4 pb-1 text-[10px] text-slate-600 focus:bg-white transition-all" 
+                                                                />
+                                                            </div>
                                                         </div>
+
                                                         <button onClick={() => addGoalItem(activeTerm, cat.id)} disabled={!goalInputs[cat.id]?.text?.trim()} className="w-full py-1.5 bg-sky-100 text-sky-600 rounded-lg hover:bg-sky-500 hover:text-white transition-all disabled:opacity-30 text-xs font-bold"><Icon name="plus" size={14} className="inline mr-1"/> Ekle</button>
                                                     </div>
                                                 </div>
